@@ -1,0 +1,13 @@
+bin/
+obj/
+node_modules/
+qa-ui/
+.git/
+.vscode/
+*.logbin/
+obj/
+node_modules/
+qa-ui/
+.git/
+.vscode/
+*.log

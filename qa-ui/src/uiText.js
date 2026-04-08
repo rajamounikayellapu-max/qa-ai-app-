@@ -1,0 +1,81 @@
+export const UI_TEXT = {
+  site: {
+    name: "Assistant Studio",
+    description: "Test planning, automation, metrics, and bug triage."
+  },
+  nav: {
+    metricsDashboard: "Metrics Dashboard",
+    testCaseGenerator: "Test Case Generator",
+    seleniumGenerator: "Selenium Generator",
+    bugManagement: "Bug Management"
+  },
+  testCasePage: {
+    eyebrow: "Test Case Generator",
+    heading: "AI-powered Test Case Generation",
+    description: "Paste a requirement or user story and generate functional, negative, boundary, and edge case test scenarios automatically.",
+    requirementLabel: "Requirement or user story",
+    requirementPlaceholder: "Example: User can login with email and password",
+    generateButton: "Generate Test Cases",
+    addButton: "Add Test Case",
+    modalHeadingCreate: "Create Test Case",
+    modalHeadingEdit: "Edit Test Case",
+    titleLabel: "Test case title",
+    stepsLabel: "Test steps",
+    expectedLabel: "Expected result",
+    titlePlaceholder: "Enter a short descriptive title",
+    stepsPlaceholder: "List the test steps here",
+    expectedPlaceholder: "Describe the expected result",
+    cancelButton: "Cancel",
+    saveButton: "Save Test Case",
+    savedSectionEyebrow: "Saved Test Cases",
+    savedSectionDescription: "Review generated scenarios, save the ones you want, or edit them before publishing."
+  },
+  seleniumPage: {
+    eyebrow: "Automation",
+    heading: "Selenium Script Generator",
+    description: "Enter plain-English test steps and generate a clean C# Selenium WebDriver script.",
+    generateButton: "Generate Selenium Script",
+    stepsLabel: "Test steps",
+    stepsPlaceholder: "Open login page https://example.com\nEnter username testuser\nEnter password pass123\nClick login button",
+    generatedTitle: "Generated Selenium Script",
+    copyButton: "Copy to clipboard",
+    copySuccess: "Copied",
+    generatingButton: "Generating...",
+    errorEmptySteps: "Please enter test steps before generating the script.",
+    errorClipboard: "Unable to copy script to clipboard."
+  },
+  metricsPage: {
+    eyebrow: "Analytics",
+    heading: "Test Metrics Dashboard",
+    description: "Visualize quality trends, sprint performance, and defect status in one view.",
+    exportButton: "Export Metrics",
+    createTestCaseButton: "Create Test Case",
+    generateViaAiButton: "Generate via AI",
+    logBugButton: "Log Bug",
+    modalHeadingCreate: "Create Test Case",
+    titlePlaceholder: "Enter a short descriptive title",
+    stepsPlaceholder: "List the test steps here",
+    expectedPlaceholder: "Describe the expected result",
+    cancelButton: "Cancel",
+    saveButton: "Save Test Case",
+    descriptionParagraph: "Use this dashboard to spot regression trends, sprint health, and open defect volume."
+  },
+  bugPage: {
+    eyebrow: "Bug Management",
+    heading: "Bug Management",
+    description: "Capture, triage, and link bugs to test cases in a polished issue tracker.",
+    newBugButton: "New Bug",
+    bugDetailsEyebrow: "Bug Details",
+    createBugHeading: "Create New Bug",
+    editBugHeading: "Edit Bug Report",
+    titleLabel: "Title",
+    descriptionLabel: "Description",
+    severityLabel: "Severity",
+    statusLabel: "Status",
+    linkTestCasesLabel: "Link test cases",
+    titlePlaceholder: "Short, descriptive title",
+    descriptionPlaceholder: "Describe what happened, where it happened, and expected behavior.",
+    cancelButton: "Cancel",
+    saveButton: "Save Bug"
+  }
+};
