@@ -16,7 +16,7 @@ import {
   X,
   Pause
 } from "lucide-react";
-import { apiService, ProjectMetrics, TestCaseResponse } from "../services/apiService";
+import { apiService, ProjectDetailResponse, ProjectMetrics, TestCaseResponse } from "../services/apiService";
 import { useAppContext } from "../context/AppContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar } from "recharts";
 
@@ -31,6 +31,7 @@ export default function ProjectDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { setIsLoading, setError } = useAppContext();
+  const [project, setProject] = useState<ProjectDetailResponse | null>(null);
   const [metrics, setMetrics] = useState<ProjectMetrics | null>(null);
   const [executionStatus, setExecutionStatus] = useState<ExecutionStatus>({
     running: 0,
@@ -44,12 +45,17 @@ export default function ProjectDetails() {
     if (!id) return;
 
     const fetchData = async () => {
+      if (!id) return;
       setIsLoading(true);
       try {
+        const projectData = await apiService.getProjectById(id);
+        setProject(projectData);
+
         const [metricsData, testCasesData] = await Promise.all([
-          apiService.getProjectMetrics(parseInt(id)),
-          apiService.getParsedTestCases(parseInt(id))
+          apiService.getProjectMetrics(id),
+          projectData.testPlanId ? apiService.getParsedTestCases(projectData.testPlanId) : Promise.resolve([])
         ]);
+
         setMetrics(metricsData);
         setTestCases(testCasesData);
       } catch (err) {
@@ -67,7 +73,7 @@ export default function ProjectDetails() {
     return () => clearInterval(interval);
   }, [id, setIsLoading, setError]);
 
-  if (!metrics) {
+  if (!project || !metrics) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
@@ -101,7 +107,7 @@ export default function ProjectDetails() {
           </button>
           <div>
             <p className="text-sm uppercase tracking-[0.28em] text-indigo-600">Project Dashboard</p>
-            <h1 className="text-3xl font-semibold text-slate-900">Project #{id}</h1>
+            <h1 className="text-3xl font-semibold text-slate-900">{project.name}</h1>
           </div>
         </div>
         <p className="text-slate-600">Real-time monitoring and execution metrics for this automation project.</p>

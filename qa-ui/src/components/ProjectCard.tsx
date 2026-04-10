@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Clock, CheckCircle, AlertCircle, PlayCircle } from "lucide-react";
 
 interface ProjectCardProps {
-  id: number;
+  id: string;
   name: string;
   status: "Running" | "Completed" | "Failed";
   lastUpdated: string;

@@ -1,24 +1,36 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { Download, FileText, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import { useProject } from '../context/ProjectContext';
 import { apiService, CodeResponse } from '../services/apiService';
 
 const CodePreviewPage = () => {
+  const { id: projectId } = useParams<{ id: string }>();
   const { currentTestPlan, setError } = useAppContext();
+  const { projects } = useProject();
   const navigate = useNavigate();
   const [codeFiles, setCodeFiles] = useState<CodeResponse['codeFiles']>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+  const planId = useMemo(() => {
+    if (projectId) {
+      const project = projects.find(p => p.id === projectId);
+      return project?.testPlanId ?? currentTestPlan?.id ?? 0;
+    }
+    return currentTestPlan?.id ?? 0;
+  }, [projectId, projects, currentTestPlan]);
+
   useEffect(() => {
-    if (!currentTestPlan) return;
+    if (planId === 0) return;
 
     const loadCode = async () => {
       setIsLoading(true);
       try {
-        const code = await apiService.getCode(currentTestPlan.id);
+        const code = await apiService.getCode(planId);
         setCodeFiles(code.codeFiles);
         setSelectedIndex(0);
       } catch (err) {
@@ -30,7 +42,7 @@ const CodePreviewPage = () => {
     };
 
     loadCode();
-  }, [currentTestPlan, setError]);
+  }, [planId, setError]);
 
   const currentFile = useMemo(() => codeFiles[selectedIndex] ?? null, [codeFiles, selectedIndex]);
 

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { apiService, LocatorMappingResponse, TestCaseResponse } from "../services/apiService";
 import { getStepDescriptions } from "../utils/testCaseParser";
 import { useAppContext } from "../context/AppContext";
+import { useProject } from "../context/ProjectContext";
 
 const locatorTypes = ["XPath", "CSS", "ID"] as const;
 
@@ -71,9 +72,17 @@ function createParsedCases(testCases: TestCaseResponse[]): ParsedTestCase[] {
 
 export default function LocatorMappingPage() {
   const [searchParams] = useSearchParams();
+  const { id: projectId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { setIsLoading, setError } = useAppContext();
-  const [planId, setPlanId] = useState<number>(0);
+  const { projects } = useProject();
+  const [planId, setPlanId] = useState<number>(() => {
+    if (projectId) {
+      const project = projects.find(p => p.id === projectId);
+      return project?.testPlanId ?? 0;
+    }
+    return Number(searchParams.get("planId") ?? 0);
+  });
   const [testCases, setTestCases] = useState<ParsedTestCase[]>([]);
   const [locators, setLocators] = useState<LocatorMappingResponse[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);

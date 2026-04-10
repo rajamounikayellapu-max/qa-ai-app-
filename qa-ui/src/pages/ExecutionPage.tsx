@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { Play, Square, RotateCcw, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
+import { useProject } from "../context/ProjectContext";
 import { apiService, ExecutionResultResponse } from "../services/apiService";
 
 interface LogEntry {
@@ -10,7 +12,9 @@ interface LogEntry {
 }
 
 export default function ExecutionPage() {
-  const { currentProject, setIsLoading, setError } = useAppContext();
+  const { id: projectId } = useParams<{ id: string }>();
+  const { setIsLoading, setError } = useAppContext();
+  const { projects, currentProject } = useProject();
   const [results, setResults] = useState<ExecutionResultResponse[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -28,10 +32,10 @@ export default function ExecutionPage() {
   }, [logs]);
 
   useEffect(() => {
-    if (currentProject) {
+    if (projectId && projects.length > 0) {
       loadResults();
     }
-  }, [currentProject]);
+  }, [projectId, projects]);
 
   useEffect(() => {
     return () => {
@@ -42,11 +46,14 @@ export default function ExecutionPage() {
   }, []);
 
   const loadResults = async () => {
-    if (!currentProject) return;
+    if (!projectId) return;
+
+    const project = projects.find(p => p.id === projectId);
+    if (!project || !project.testPlanId) return;
 
     setIsLoading(true);
     try {
-      const data = await apiService.getExecutionResults(currentProject.id);
+      const data = await apiService.getExecutionResults(project.testPlanId);
       setResults(data);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to load results";

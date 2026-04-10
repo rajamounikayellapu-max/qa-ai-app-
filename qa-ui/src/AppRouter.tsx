@@ -26,6 +26,10 @@ export default function AppRouter() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/projects" element={<ProjectPreviewPage />} />
+              <Route path="/project/:id/testcases" element={<TestCasesPage />} />
+              <Route path="/project/:id/locators" element={<LocatorMappingPage />} />
+              <Route path="/project/:id/code" element={<CodePreviewPage />} />
+              <Route path="/project/:id/execution" element={<ExecutionPage />} />
               <Route path="/testcases" element={<TestCasesPage />} />
               <Route path="/locators" element={<LocatorMappingPage />} />
               <Route path="/code" element={<CodePreviewPage />} />

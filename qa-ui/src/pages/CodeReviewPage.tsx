@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, FileText, ShieldCheck, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PageHeader from '../components/PageHeader';
 
 const reviewItems = [
   { title: 'Clarity', detail: 'Code is easy to understand and follow.', icon: FileText },
@@ -12,19 +13,20 @@ const CodeReviewPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Code Review</h1>
-          <p className="mt-2 text-sm text-slate-600">Review generated automation scripts before running them.</p>
-        </div>
-        <button
-          onClick={() => navigate('/code')}
-          className="rounded-md bg-slate-900 px-4 py-2 text-white hover:bg-slate-700"
-        >
-          Back to Preview
-        </button>
-      </div>
+    <section className="space-y-6">
+      <PageHeader
+        label="Code review"
+        title="Review generated automation scripts"
+        description="Inspect the generated Selenium code, validate quality, and prepare the package for execution."
+        actions={
+          <button
+            onClick={() => navigate('/code')}
+            className="rounded-3xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
+          >
+            Back to Preview
+          </button>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         {reviewItems.map((item) => {
@@ -45,7 +47,7 @@ const CodeReviewPage = () => {
         })}
       </div>
 
-      <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3 text-slate-900">
           <CheckCircle2 size={24} />
           <div>
@@ -69,7 +71,7 @@ const CodeReviewPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

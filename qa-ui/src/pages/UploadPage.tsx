@@ -2,12 +2,16 @@ import { ChangeEvent, DragEvent, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiService } from "../services/apiService";
 import { useAppContext } from "../context/AppContext";
+import { useProject } from "../context/ProjectContext";
+import RecentProjects from "../components/RecentProjects";
+import PageHeader from "../components/PageHeader";
 
 export default function UploadPage() {
   const [fileName, setFileName] = useState<string>("");
   const [status, setStatus] = useState<string>("Drag and drop a Word test plan or browse to upload.");
   const navigate = useNavigate();
   const { setCurrentTestPlan, setIsLoading, setError } = useAppContext();
+  const { createProject, setCurrentProject, setProjects } = useProject();
 
   const handleFile = useCallback(async (file?: File) => {
     if (!file) return;
@@ -33,16 +37,44 @@ export default function UploadPage() {
 
     setFileName(file.name);
     setIsLoading(true);
-    setStatus("Uploading and processing...");
+    setStatus("Creating project...");
 
     try {
-      const plan = await apiService.uploadTestPlan(file);
+      // Create project first
+      const projectName = file.name.replace(/\.docx$/i, "");
+      const project = await createProject(projectName);
+      console.log(`✅ Project created:`, project);
+
+      setStatus("Uploading and processing...");
+
+      // Upload file linked to project
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadResponse = await fetch(`/api/project/${project.id}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const payload = await uploadResponse.text();
+        const message = payload ? payload : "Upload failed";
+        throw new Error(message);
+      }
+
+      const payload = await uploadResponse.json();
+      const plan = payload.testPlan ?? payload;
+      const updatedProject = payload.project ?? project;
+
       console.log(`✅ Upload successful! TestPlan:`, plan);
       console.log(`   ID: ${plan.id}, Title: ${plan.title}, TestCases: ${plan.testCases?.length ?? 0}`);
-      
+      console.log(`✅ Updated project:`, updatedProject);
+
       setCurrentTestPlan(plan);
-      setStatus(`Upload completed. Redirecting to parsed test cases for ${plan.title}`);
-      navigate(`/testcases?planId=${plan.id}`);
+      setCurrentProject(updatedProject);
+      setProjects((prev) => prev.map((item) => (item.id === updatedProject.id ? updatedProject : item)));
+      setStatus(`Project created successfully. Redirecting to test cases...`);
+      navigate(`/project/${project.id}/testcases`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Upload failed";
       console.error(`❌ Upload failed:`, errorMsg, err);
@@ -51,7 +83,7 @@ export default function UploadPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [setCurrentTestPlan, setIsLoading, setError, navigate]);
+  }, [createProject, setCurrentTestPlan, setIsLoading, setError, navigate, setCurrentProject, setProjects]);
 
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
@@ -69,11 +101,11 @@ export default function UploadPage() {
 
   return (
     <section className="space-y-6">
-      <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50">
-        <p className="text-sm uppercase tracking-[0.28em] text-indigo-600">Upload</p>
-        <h1 className="mt-4 text-4xl font-semibold text-slate-900">Import your test plan</h1>
-        <p className="mt-3 text-slate-600">Securely upload structured Word plans and convert them into parsed test cases ready for locator mapping.</p>
-      </header>
+      <PageHeader
+        label="Upload"
+        title="Import your test plan"
+        description="Securely upload structured Word plans and convert them into parsed test cases ready for locator mapping."
+      />
 
       <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-lg shadow-slate-200/40">
@@ -118,6 +150,8 @@ export default function UploadPage() {
           </div>
         </div>
       </div>
+
+      <RecentProjects />
     </section>
   );
 }

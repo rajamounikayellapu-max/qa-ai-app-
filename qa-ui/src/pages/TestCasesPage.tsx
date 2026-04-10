@@ -1,7 +1,8 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { apiService, TestCaseResponse } from "../services/apiService";
 import { useAppContext } from "../context/AppContext";
+import { useProject } from "../context/ProjectContext";
 import { createParsedCases, ParsedStep, ParsedTestCase } from "../utils/testCaseParser";
 
 const ACTION_OPTIONS = [
@@ -14,9 +15,23 @@ const ACTION_OPTIONS = [
 
 export default function TestCasesPage() {
   const [searchParams] = useSearchParams();
+  const { id: projectId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentTestPlan, setCurrentTestPlan, setError } = useAppContext();
-  const [planId, setPlanId] = useState<number>(() => Number(searchParams.get("planId") ?? currentTestPlan?.id ?? 0));
+  const { projects } = useProject();
+
+  const currentProject = useMemo(
+    () => (projectId ? projects.find((p) => p.id === projectId) : null),
+    [projectId, projects]
+  );
+
+  const planId = useMemo(() => {
+    if (projectId) {
+      return currentProject?.testPlanId ?? currentTestPlan?.id ?? 0;
+    }
+    return Number(searchParams.get("planId") ?? currentTestPlan?.id ?? 0);
+  }, [projectId, currentProject, searchParams, currentTestPlan]);
+
   const [loadingCases, setLoadingCases] = useState(false);
   const [testCases, setTestCases] = useState<ParsedTestCase[]>([]);
   const [activeCaseId, setActiveCaseId] = useState<number | null>(null);
@@ -80,23 +95,16 @@ export default function TestCasesPage() {
   }, [setCurrentTestPlan, setError]);
 
   useEffect(() => {
-    const requestedPlanId = Number(searchParams.get("planId") ?? currentTestPlan?.id ?? 0);
-    console.log(`🔄 TestCases useEffect triggered:`, {
-      requestedPlanId,
-      currentPlanId: planId,
-      currentTestPlanId: currentTestPlan?.id,
-      willFetch: requestedPlanId > 0 && requestedPlanId !== planId
-    });
-    
-    if (requestedPlanId > 0 && requestedPlanId !== planId) {
-      console.log(`📥 Setting planId to ${requestedPlanId} and loading...`);
-      setPlanId(requestedPlanId);
-      loadTestCases(requestedPlanId);
-    } else if (requestedPlanId > 0 && requestedPlanId === planId && testCases.length === 0) {
-      console.log(`♻️ PlanId already set, but no test cases loaded. Fetching...`);
-      loadTestCases(requestedPlanId);
+    if (!planId) {
+      return;
     }
-  }, [currentTestPlan?.id, loadTestCases, planId, searchParams, testCases.length]);
+
+    console.log(`🔄 TestCases useEffect triggered for planId=${planId}`);
+
+    if (testCases.length === 0 && !loadingCases) {
+      loadTestCases(planId);
+    }
+  }, [currentTestPlan?.id, loadTestCases, planId, searchParams, testCases.length, loadingCases]);
 
   useEffect(() => {
     if (activeCaseId === null && filteredCases.length > 0) {
@@ -150,8 +158,22 @@ export default function TestCasesPage() {
       <section className="space-y-6">
         <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50">
           <p className="text-sm uppercase tracking-[0.28em] text-indigo-600">Test cases</p>
-          <h1 className="mt-4 text-4xl font-semibold text-slate-900">No test plan selected</h1>
-          <p className="mt-3 text-slate-600">Upload a plan first or select a parsed plan from the dashboard.</p>
+          <h1 className="mt-4 text-4xl font-semibold text-slate-900">No parsed test plan available</h1>
+          <p className="mt-3 text-slate-600">
+            {currentProject ? (
+              <>This project has not been linked to a parsed test plan yet. Upload a .docx test plan or refresh the project to load generated cases.</>
+            ) : (
+              <>Upload a plan first or select a parsed plan from the dashboard.</>
+            )}
+          </p>
+          {currentProject && (
+            <button
+              onClick={() => navigate('/upload')}
+              className="mt-6 inline-flex items-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-500"
+            >
+              Upload a test plan
+            </button>
+          )}
         </header>
       </section>
     );

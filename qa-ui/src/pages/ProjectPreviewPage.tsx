@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { apiService } from '../services/apiService';
+import PageHeader from '../components/PageHeader';
 
 export default function ProjectPreviewPage() {
   const { currentTestPlan, currentProject, setCurrentProject, setIsLoading, setError } = useAppContext();
@@ -24,11 +25,11 @@ export default function ProjectPreviewPage() {
 
   return (
     <section className="space-y-6">
-      <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50">
-        <p className="text-sm uppercase tracking-[0.28em] text-indigo-600">Generated project</p>
-        <h1 className="mt-4 text-4xl font-semibold text-slate-900">Project preview</h1>
-        <p className="mt-3 text-slate-600">Generate a C# Selenium automation package from your uploaded test plan.</p>
-      </header>
+      <PageHeader
+        label="Generated project"
+        title="Project preview"
+        description="Generate a C# Selenium automation package from your uploaded test plan."
+      />
 
       {!currentTestPlan ? (
         <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-lg shadow-slate-200/40">

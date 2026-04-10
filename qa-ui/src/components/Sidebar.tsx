@@ -67,8 +67,17 @@ export default function Sidebar() {
 function SidebarContent({ location, onClose }: { location: any; onClose?: () => void }) {
   return (
     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 py-8">
-      <div className="flex h-16 shrink-0 items-center">
+      <div className="flex h-16 shrink-0 items-center justify-between gap-4">
         <h1 className="text-xl font-bold text-slate-900">AI QA Automation</h1>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        ) : null}
       </div>
       <nav className="flex flex-1 flex-col">
         <ul role="list" className="flex flex-1 flex-col gap-y-7">

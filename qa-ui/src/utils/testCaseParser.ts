@@ -46,9 +46,10 @@ function normalizeLine(raw: string): string {
     .replace(/[\p{C}]/gu, " ")
     .trim();
 
-  text = text.replace(/^\s*[\d*•-]+\s*/g, "").trim();
-  text = text.replace(/^[-–—•]+\s*/g, "").trim();
+  text = text.replace(/^\s*((\d+[\.)])|[-–—•])\s*/g, "").trim();
+  text = text.replace(/^[-–—•\.\s]+/, "").trim();
   text = text.replace(/[\s\t]+/g, " ").trim();
+  text = text.replace(/[.?!]+$/, "").trim();
 
   return text;
 }
@@ -85,7 +86,7 @@ export interface StepDescription {
 function extractWaitText(description: string): { description: string; wait: string } {
   const waitPatterns = [
     /\.\s*(?:Note:|please\s+)?(?:wait|please wait|pause)(?:\s+for)?\s+([^.]+?)(?:\.|\s+for\s+|$)/gi,
-    /(?:Please\s+)?[Ww]ait\s+([^.!?]+?)(?=[.!?]|$)/g,
+    /(?:^|\.\s+)(?:Please\s+)?[Ww]ait\s+([^.!?]+?)(?=[.!?]|$)/g,
     /\(.*?(wait|pause|delay).*?(\d+\s*(?:sec|seconds|ms))\s*\)/gi
   ];
 
@@ -107,99 +108,49 @@ function extractWaitText(description: string): { description: string; wait: stri
 function splitStepDescriptions(rawSteps: string): StepDescription[] {
   if (!rawSteps) return [];
 
-  console.log("🔍splitStepDescriptions - Raw steps length:", rawSteps.length);
-  console.log("🔍 Raw (first 150 chars):", rawSteps.substring(0, 150));
-
-  // Clean up the input first
-  let cleaned = rawSteps
-    .replace(/[\r\n]+/g, " ") // Replace line breaks with spaces
-    .replace(/\s{2,}/g, " ") // Replace multiple spaces with single space
+  const cleanedRaw = rawSteps
+    .replace(/\r\n?/g, "\n")
+    .replace(/\u2022/g, "-")
+    .replace(/\u00A0/g, " ")
+    .replace(/[\t ]+/g, " ")
     .trim();
 
-  console.log("🔍 Cleaned length:", cleaned.length);
-  console.log("🔍 Cleaned (first 150 chars):", cleaned.substring(0, 150));
-
-  // Remove unwanted prefixes/patterns
-  cleaned = cleaned
-    .replace(/^(?:Test\s+)?[Ss]teps?[\s:]*-?\s*/i, "")
-    .replace(/^(steps?|test steps?)\s*[:-]?\s*/i, "")
+  let cleaned = cleanedRaw
+    .replace(/^(?:Test\s+)?(?:Steps?|Test\s+Steps?)\s*[:\-]?\s*/i, "")
     .trim();
 
-  // Try to match numbered steps: "1. ... 2. ... 3. ..." or "1) ... 2) ..."
-  const numberedRegex = /(\d+)[\.\)]\s*(.+?)(?=(?:\d+[\.\)]\s*)|$)/gs;
-  const numberedMatches: StepDescription[] = [];
-  let match;
+  const lines = cleaned
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 
-  console.log("🔍 Testing numbered regex on:", cleaned.substring(0, 100));
+  const chunks: string[] = [];
 
-  while ((match = numberedRegex.exec(cleaned)) !== null) {
-    console.log(`✅ Matched step ${match[1]}: ${match[2].trim().substring(0, 80)}`);
-    let stepText = match[2].trim();
-
-    // Remove "Current Version: ..." from the step
-    stepText = stepText.replace(/\s*Current\s+Version\s*[:\-]?\s*[^\s]*/gi, "").trim();
-
-    // Remove "Note: ..." from the step
-    stepText = stepText.replace(/\s*Note\s*:\s*.+?(?=\.|$)/gi, "").trim();
-
-    // Clean up extra quotes and symbols
-    stepText = stepText
-      .replace(/['""`""]|<|>/g, "'")
-      .replace(/[']{2,}/g, "'")
-      .replace(/\s+['"]\s*(?:with|and)/gi, " with")
-      .trim();
-
-    // Extract wait/condition text
-    const { description: cleanedDescription, wait: waitText } = extractWaitText(stepText);
-
-    if (cleanedDescription && cleanedDescription.length > 2) {
-      numberedMatches.push({
-        stepNumber: parseInt(match[1], 10),
-        description: cleanedDescription.trim(),
-        waitText: waitText
-      });
+  for (const line of lines) {
+    // Split inline numbered or bullet list items within the same line
+    const inlineParts = line.split(/(?=(?:\d+[\.)]|[-–—•])\s+)/).map((part) => part.trim()).filter(Boolean);
+    if (inlineParts.length > 1) {
+      chunks.push(...inlineParts);
+      continue;
     }
+
+    chunks.push(line);
   }
 
-  console.log(`📊 Found ${numberedMatches.length} numbered steps`);
-
-  // If we found numbered steps, return them
-  if (numberedMatches.length > 0) {
-    console.log("✅ Returning numbered steps");
-    return numberedMatches;
-  }
-
-  // Fallback 1: split by semicolons, bullets, line breaks
-  const segments = cleaned
-    .split(/[;\u2022•\r\n]+/)
-    .map(normalizeLine)
-    .filter((item) => Boolean(item) && !isGarbageLine(item));
-
-  if (segments.length > 1) {
-    console.log(`⚠️ Fallback 1: Using ${segments.length} segments`);
-    return segments.map((desc, index) => {
-      const { description, wait } = extractWaitText(desc);
+  const stepDescriptions = chunks
+    .map((step) => normalizeLine(step))
+    .filter((step) => Boolean(step) && !isGarbageLine(step))
+    .map((step, index) => {
+      const { description, wait } = extractWaitText(step);
       return { stepNumber: index + 1, description, waitText: wait };
     });
+
+  if (stepDescriptions.length > 0) {
+    return stepDescriptions;
   }
 
-  // Fallback 2: split by sentence-ending punctuation (with or without spaces)
-  const sentenceSegments = cleaned
-    .split(/(?<=[.!?])\s*/)
-    .map(normalizeLine)
-    .filter((item) => Boolean(item) && !isGarbageLine(item));
-
-  if (sentenceSegments.length > 1) {
-    console.log(`⚠️ Fallback 2: Using ${sentenceSegments.length} sentences`);
-    return sentenceSegments.map((desc, index) => {
-      const { description, wait } = extractWaitText(desc);
-      return { stepNumber: index + 1, description, waitText: wait };
-    });
-  }
-
-  // Fallback 3: treat entire text as single step
-  console.log("❌ No split strategy worked - returning as single step");
-  const { description, wait } = extractWaitText(cleaned);
+  const fallback = normalizeLine(cleaned);
+  const { description, wait } = extractWaitText(fallback);
   return [{ stepNumber: 1, description, waitText: wait }];
 }
 

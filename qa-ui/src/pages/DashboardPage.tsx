@@ -1,9 +1,10 @@
 import { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Activity, Cpu, ShieldCheck, Sparkles, FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { ShieldCheck, FileText, AlertTriangle, CheckCircle } from "lucide-react";
 import { apiService, ProjectSummary } from "../services/apiService";
 import { useAppContext } from "../context/AppContext";
 import ProjectCard from "../components/ProjectCard";
+import PageHeader from "../components/PageHeader";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -65,11 +66,11 @@ export default function DashboardPage() {
 
   return (
     <section className="space-y-8">
-      <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50">
-        <p className="text-sm uppercase tracking-[0.28em] text-indigo-600">Dashboard</p>
-        <h1 className="mt-4 text-4xl font-semibold text-slate-900">Automation Overview</h1>
-        <p className="mt-3 text-slate-600">Monitor your QA automation workflows, track metrics, and get AI-powered insights.</p>
-      </header>
+      <PageHeader
+        label="Dashboard"
+        title="Automation Overview"
+        description="Monitor your QA automation workflows, track metrics, and get AI-powered insights."
+      />
 
       {/* Metrics Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -86,6 +87,37 @@ export default function DashboardPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="grid gap-6">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">Quick actions</h2>
+              <p className="mt-2 text-slate-600">Take the next step in your automation workflow with one click.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <button
+                onClick={() => navigate('/upload')}
+                className="rounded-3xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-500 transition"
+              >
+                Upload Test Plan
+              </button>
+              <button
+                onClick={() => navigate('/testcases')}
+                className="rounded-3xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition"
+              >
+                Review Test Cases
+              </button>
+              <button
+                onClick={() => navigate('/download')}
+                className="rounded-3xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition"
+              >
+                Download Package
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

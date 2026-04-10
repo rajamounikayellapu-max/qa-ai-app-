@@ -44,13 +44,18 @@ export interface StepAction {
 }
 
 export interface ProjectSummary {
-  id: number;
+  id: string;
   name: string;
   status: "Running" | "Completed" | "Failed";
   lastUpdated: string;
   totalTestCases: number;
   passRate: number;
   failedCount: number;
+}
+
+export interface ProjectDetailResponse extends ProjectSummary {
+  testPlanId?: number;
+  currentStage: string;
 }
 
 export interface WorkflowSummary {
@@ -182,12 +187,18 @@ class ApiService {
   }
 
   async checkHealth(): Promise<boolean> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/health`);
-      return response.ok;
-    } catch {
-      return false;
+    const healthUrls = [`${API_BASE_URL}/health`, `/api/health`];
+    for (const url of healthUrls) {
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          return true;
+        }
+      } catch {
+        // Continue to fallback URLs if available.
+      }
     }
+    return false;
   }
 
   async getParsedTestCases(planId: number): Promise<TestCaseResponse[]> {
@@ -234,8 +245,16 @@ class ApiService {
     return response.json();
   }
 
-  async getProjectMetrics(projectId: number): Promise<ProjectMetrics> {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/metrics`);
+  async getProjectById(projectId: string): Promise<ProjectDetailResponse> {
+    const response = await fetch(`${API_BASE_URL}/project/${encodeURIComponent(projectId)}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch project: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getProjectMetrics(projectId: string): Promise<ProjectMetrics> {
+    const response = await fetch(`${API_BASE_URL}/project/${encodeURIComponent(projectId)}/metrics`);
     if (!response.ok) {
       throw new Error(`Failed to fetch project metrics: ${response.statusText}`);
     }
@@ -346,12 +365,18 @@ class ApiService {
     return response.json();
   }
 
-  async downloadProject(projectId: number): Promise<Blob> {
-    const response = await fetch(`${API_BASE_URL}/download/${projectId}`);
+  async downloadProject(projectId: number): Promise<string> {
+    // Check if the file exists by making a HEAD request
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5100';
+    const downloadUrl = `${backendUrl}/api/download/${projectId}`;
+
+    const response = await fetch(downloadUrl, { method: 'HEAD' });
     if (!response.ok) {
-      throw new Error(`Failed to download project: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Failed to download project: ${response.status} ${errorText}`);
     }
-    return response.blob();
+
+    return downloadUrl;
   }
 }
 
